@@ -1,0 +1,225 @@
+# cheatsheet --command sed
+
+最初に明示しておくが sed には GNU版 と BSD版 の2種類がある
+これは GNU版 の sed についてのtipsである
+
+# ------------------------------------------------------------------------------
+# sed --help # version: GNU 4.4
+Usage: sed [OPTION]... {script-only-if-no-other-script} [input-file]...
+
+  -n, --quiet, --silent
+                 suppress automatic printing of pattern space
+  -e script, --expression=script
+                 add the script to the commands to be executed
+  -f script-file, --file=script-file
+                 add the contents of script-file to the commands to be executed
+  --follow-symlinks
+                 follow symlinks when processing in place
+  -i[SUFFIX], --in-place[=SUFFIX]
+                 edit files in place (makes backup if SUFFIX supplied)
+  -b, --binary
+                 open files in binary mode (CR+LFs are not processed specially)
+  -l N, --line-length=N
+                 specify the desired line-wrap length for the `l' command
+  --posix
+                 disable all GNU extensions.
+  -E, -r, --regexp-extended
+                 use extended regular expressions in the script
+                 (for portability use POSIX -E).
+  -s, --separate
+                 consider files as separate rather than as a single,
+                 continuous long stream.
+      --sandbox
+                 operate in sandbox mode.
+  -u, --unbuffered
+                 load minimal amounts of data from the input files and flush
+                 the output buffers more often
+  -z, --null-data
+                 separate lines by NUL characters
+      --help     display this help and exit
+      --version  output version information and exit
+
+If no -e, --expression, -f, or --file option is given, then the first
+non-option argument is taken as the sed script to interpret.  All
+remaining arguments are names of input files; if no input files are
+specified, then the standard input is read.
+
+GNU sed home page: <http://www.gnu.org/software/sed/>.
+General help using GNU software: <http://www.gnu.org/gethelp/>.
+E-mail bug reports to: <bug-sed@gnu.org>.
+
+
+# ------------------------------------------------------------------------------
+# sed -i について
+以下のファイルを考える
+$ seq -w 20 > sample.txt
+'0'から始まる行を削除する
+$ sed '/^0/d' sample.txt
+しかしcatで確認してみると削除されていない
+$ cat sample.txt
+これは'sed'が対象ファイルのコピーに対し実行されるからだ
+これを防ぎ、対象ファイルを変更したい場合は2つの方法がある
+
+sedのオプションを使用する方法
+sed [-i or --in-place]
+in-placeオプションは単純に対象ファイルに変更を反映させる
+詳しくは覚えていないが何か副作用か、あるいはファイルが消失するリスクがあったと思う
+
+中間ファイルを作る方法
+$ mv sample.txt sample.tmp
+$ sed '/^0/d' sample.tmp > sample.txt
+あらかじめファイルを別名で保存しておいて、sedの結果をもとの名前でリダイレクトする
+＊なぜ中間ファイルを使うか
+$ sed '/^0/d' sample.txt > sample.txt # 直接リダイレクトすると中身が消えるため
+おそらくsedの仕様か、bash自体の仕様かもしれない
+File I/O かバッファの確保のロジックに由来すると思う
+
+
+# ------------------------------------------------------------------------------
+# sed -E について *拡張正規表現*
+sed [-E or -r or --regexp-extended]
+sedには '^' や '$' のような特殊な文字が存在するが、標準の特殊文字は限定されている
+拡張正規表現を使用することで、より自由な検索指定ができるようになる
+
+例えばアクセスログなどで
+$ cat access-log.csv
+date,ip,os,name
+2019-xx-xx,192.1.x.x,Windows,rozeroze
+2019-xx-xx,192.2.x.x,ウィンドウズ,rozeroze
+2019-xx-xx,192.3.x.x,Windows 10,rozeroze
+2019-xx-xx,192.4.x.x,ｳｨﾝﾄﾞｳｽﾞ,rozeroze
+
+デバイスによって差異が発生するのはよくあります
+os列の表記を統一したいときに、sedの標準の特殊文字では力不足でしょう
+
+拡張正規表現を使用せずとも sed を繰り返せば事足りますが
+$ sed -i 's/ウィンドウズ/Windows/'
+$ sed -i 's/Windows 10/Windows/'
+$ sed -i 's/ｳｨﾝﾄﾞｳｽﾞ/Windows/'
+
+拡張正規表現を使用したほうがシンプルで強力です
+$ sed -i -E 's/(Windows|ウィンドウズ|ｳｨﾝﾄﾞｳｽﾞ)(\s[0-9]*)?/Windows/'
+
+
+# ------------------------------------------------------------------------------
+# sed のデリミタについて
+例えば検索対象が '/' のときはどう指定すればいいか
+
+以下の '/' を ',' に変更する
+$ seq -s / 10
+1/2/3/4/5/6/7/8/9/10
+
+$ seq -s / 10 | sed 's/\//,/g' # デリミタに '/'Üを使う場合
+$ seq -s / 10 | sed 's:/:,:g'  # デリミタに ':' を使う場合
+$ seq -s / 10 | sed 's;/;,;g'  # デリミタに ';' を使う場合
+$ seq -s / 10 | tr / ,         # むしろ tr を使うべき
+
+
+# ------------------------------------------------------------------------------
+# 検索フラグについて
+例えば以下の場合
+$ echo 'g flg is global searching'
+$ echo 'i flg is search ignore case'
+$ echo 'c flg is compare? forgot it'
+
+
+# ------------------------------------------------------------------------------
+# 特定の文字を含む行に対し特定のscriptを実行する
+ex: .bash_history にある'cd'と'ls'コマンド履歴を削除
+$ sed -i '/^cd/d' ~/.bash_history
+$ sed -i '/^ls/d' ~/.bash_history
+
+ただしこれは以下のような弊害がある
+$   cd /etc/something                   # cdコマンドの前にスペースがある
+$ lsync --help                          # lsync のような'ls'から始まるコマンドも削除される
+$ ls -l | cut -d ' ' -f 3 | sort | uniq # pipe処理のような'ls'にとどまらない処理も削除される
+
+このような弊害が起こり得るのはscriptの指定が不足している故だ
+例えば '/^cd/d' について見てみよう
+
+最初の'/'から次の'/'までの間が検索キーワードとして使われる
+この場合は、'^cd'を検索するが、このときに特殊文字を考慮しなければならない
+'^cd'のケースでは'^'が特殊文字であり、この文字は行頭を意味する
+つまり、'cd'から始まる行を検索しているだけであり、その他に指定はない
+
+2つめの'/'以降は実行したいコマンドとして使われる
+この場合は'd'がコマンドであり、'd'は行の削除を意味している
+故に上記のコマンドは'cd'から始まるすべての行を削除する、という意味になる
+
+$ sed '/<search-word>/<command>' <target-file>
+
+
+# ------------------------------------------------------------------------------
+# 特定の範囲に対しscriptを実行する
+ex: .bash_hitory にある古い履歴を削除する
+$ sed -i '1,10d' ~/.bash_history
+
+たとえば .bash_history の場合、ファイルの先頭に近いほど履歴が古く、
+EOFに近いほど履歴が新しいという特徴がある（……はず）
+
+$ sed -i '1d' ~/.bash_history      # 先頭の1行目だけを削除する
+$ sed -i '5d' ~/.bash_history      # 先頭の5行目だけを削除する
+$ sed -i '1,10d' ~/.bash_history   # 先頭10行を削除する
+$ cat ~/.bash_history | tail -n +2 # 先頭2行目以降を表示するだけならこれでもいい
+
+単一行を指定するときはその行番号を、範囲指定するときは 開始行,終了行 と指定する
+
+$ sed '<range><command>' <target-file>
+
+
+# ------------------------------------------------------------------------------
+# 文字の置換を行なう
+ex: TODOリストの終了ステータスを更新する
+
+以下のファイルを考える
+$ cat todos.csv
+task-id,user,title,limit,status(none,finish)
+1,rozeroze,Review the code issue-123,2019-xx-xx,none
+2,chaochao,Rescheduling,2019-xx-xx,none
+3,rozeroze,Merge to master branch,2019-xx-xx,none
+4,tesitesi,Make bug reports,2019-xx-xx,none
+
+すべての終了ステータスをfinishに更新する
+$ sed -i '/^[0-9]/ s/none/finish/' todos.csv
+
+このsedコマンドは論理的に2つに分割できる
+  1.  /^[0-9]/          <- 数字から始まる行
+  2.  s/none/finish/    <- 'none'を'finish'に変換
+
+1. /^[0-9]/
+今回は行数が判明していたため、純粋に'2,5s/none/finish/'と入力してもよいが
+場合によっては行数不明、あるいは行指定が困難なケースもある
+そういった場合に '<range><command>' のrange部分を検索コマンドで動的に指定できる
+
+2. s/none/finish/
+文字の置換を行なうには 's' コマンドを使う
+
+$ sed '<range>s/<置換対象の文字列>/<置換後の文字列>/<flag>' <target-file>
+
+
+# ------------------------------------------------------------------------------
+# 行の追加
+ex: 空行を追加する ……sedで
+
+$ cat config.txt | head -n 5
+user-1: 0d60297ed94081616a464da5d6561af8ebb07fe2f7d684a95ac5d01102c1d915
+user-1: 23a76e5937c6c22a92c04c8888dc42b4988593e6ed28b598e01a7e53a6937993
+user-2: 7369ef02cae31c553473763774c0d655441326b57cd3ebec670920ca31be821d
+user-3: fabf85b9cea282ab1abb9860cb70a9994c05125c51254676c0ce6aeee2547ba2
+user-3: 0fbf569cd95c4b1bf420f44806d2be14bfeb4bfa1a515a7eb187e9990d9b13ee
+
+各userごとに空行を挟み、読みやすくする
+$ sed -i '2s/$/&\n/' config.txt
+
+$ cat config.txt | head -n 5
+user-1: 0d60297ed94081616a464da5d6561af8ebb07fe2f7d684a95ac5d01102c1d915
+user-1: 23a76e5937c6c22a92c04c8888dc42b4988593e6ed28b598e01a7e53a6937993
+
+user-2: 7369ef02cae31c553473763774c0d655441326b57cd3ebec670920ca31be821d
+user-3: fabf85b9cea282ab1abb9860cb70a9994c05125c51254676c0ce6aeee2547ba2
+
+空行を追加する
+
+$ sed -i '<row>s/$/&\n/' <target-file>
+
+

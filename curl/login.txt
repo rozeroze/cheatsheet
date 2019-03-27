@@ -1,0 +1,13 @@
+### ログインが必要なページから curl でデータ取得
+
+> https://qiita.com/kuboon/items/85169dcec746db552935
+
+```bash
+curl -c cookie.txt -d "user=kuboon" -d "pass=password" "http://example.com/login"
+curl -b cookie.txt "http://exapmle.com/admin/get_data"
+```
+
+1行目でログイン。デベロッパーツール等を用いて実際にログインするときのIDとパスワードのパラメータ名と form の POST 先 URL を調べ、-d オプションとURLを適当にして実行。ログインに成功したら、その時入手した cookie を cookie.txt に保存する。
+
+2行目でデータ取得。さっき入手したばかりの cookie を手みやげにする
+

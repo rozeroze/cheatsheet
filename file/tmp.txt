@@ -1,0 +1,10 @@
+$ file -b <ファイル名>
+文字コードとfindコマンドでの表示か以下の通りです
+
+文字コード	findコマンドでの表示
+EUC	ISO-8859 text
+Shift-JIS	Non-ISO extended-ASCII text
+JIS	ASCII text
+UTF-8	UTF-8 text
+
+vim: ts=16

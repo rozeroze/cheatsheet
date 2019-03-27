@@ -1,0 +1,82 @@
+# Author: rozeroze
+# Version: 2019-01-08
+
+# Basic
+
+### Gitのすべての設定を確認する
+$ git config --list
+
+### Gitのシステム全体の設定を確認する
+$ git config --system --list
+
+### Gitのユーザごとの設定を確認する
+$ git config --global --list
+
+### Gitのリポジトリごとの設定を確認する
+$ git config --local --list
+
+### Gitの特定のユーザ設定を確認する
+$ git config --global --get user.name
+
+### Gitの有効な設定を確認する (local,global,system)の順に優先度が高い
+$ git config --get user.name
+
+### Gitのユーザ設定を追加する
+$ git config --global user.email sample@test.jp
+
+### レベルを指定しないときはローカルな設定が変更される
+$ git config user.email local@test.jp
+
+### Gitの特定の設定を削除する
+$ git config --local --unset user.email
+
+### Gitの設定ファイルを直接編集する (local)
+$ git config --edit
+
+### Gitのユーザ設定ファイルを直接編集する
+$ git config --global --edit
+
+# Config
+
+### ユーザ名 <user.name>
+$ git config --local user.name 'rozeroze'
+
+### メールアドレス <user.email>
+$ git config --local user.email 'rosettastone1886@gmail.com'
+
+### エディタ <core.editor>
+$ git config --local core.editor 'vim -c "set fenc=utf-8"'
+
+### コマンド実行時に自動で配色する <color>
+$ git config --local color.diff auto
+$ git config --lcoal color.status auto
+$ git config --local color.branch auto
+
+### マルチバイト文字列を含むファイル名がエスケープされるのを阻止 <multibyte>
+$ git config --local core.quotepath false
+
+### Gitコマンドのエイリアスを設定
+$ git config --local alias.unstage = reset -q HEAD --
+$ git config --local alias.discard = checkout --
+$ git config --local alias.uncommit = reset --mixed HEAD~
+$ git config --local alias.amend = commit --amend
+
+### コミットとチェックアウト時に改行コードを変換しない
+$ git config --local core.autocrlf false
+
+### eol,eofのspaceと、tabでインデントされている行をhighlight
+$ git config --local core.whitespace trailing-space,tab-in-indent
+
+### filemodeの変更を無視する
+$ git config --local core.filemode false
+
+### ファイル名のupper-lowerの変更を検知する
+$ git config --local core.ignorecase false
+
+### diffを表示するときに外部ツールを使用する (vimdiffの例)
+$ git config --local diff.tool vimdiff
+$ git config --local difftool.prompt false
+$ git config --local merge.tool vimdiff
+$ git config --local mergetool.prompt false
+
+### vim: ft=sh

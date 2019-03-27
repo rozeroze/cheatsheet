@@ -1,0 +1,23 @@
+# Author: rozeroze
+# Version: 2019-01-08
+
+
+### 差分ファイルを圧縮する
+* 'git rev-parse --show-toplevel' はGit管理している一番上のフォルダパス（絶対パス）を返す
+* 環境によっては絶対パスでは動作しない可能性がある、そのときは
+* 'git rev-parse --show-cdup' にて相対パスを取得する
+* 'git diff --name-only' は一番上のフォルダーからのパスを返す
+* pipe でつなげて tar圧縮する
+
+$ cd `git rev-parse --show-toplevel`
+$ # あるいは↓
+$ # cd $(git rev-parse --show-cdup)
+$ git diff --name-only | xargs tar -zcf diff.tar.gz
+
+$ # 解答コマンド例
+$ tar -zxf diff.tar.gz
+
+### 差分ファイルを圧縮する 相対パスを使う
+$ git diff --relative --name-only 2> /dev/null | xargs tar -zcf diff.tar.gz
+
+# vim: ft=sh

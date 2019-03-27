@@ -1,0 +1,9 @@
+# Author: rozeroze
+# Version: 2019-03-07
+
+# Basic
+
+### 差分ごとに選択的にaddする
+$ git add -p target-file
+
+# vim: ft=sh

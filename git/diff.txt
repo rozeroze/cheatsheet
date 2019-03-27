@@ -1,0 +1,55 @@
+# Author: rozeroze
+# Version: 2019-01-08
+
+# Basic
+
+### addしていない変更を確認する
+$ git diff
+
+### addの内容を確認する
+$ git diff --cached
+$ git diff --cached HEAD
+
+### addの有無にかかわらず、working-treeとHEADの差分を確認する
+$ git diff HEAD
+
+### 変更したファイル名だけを確認する
+$ git diff --name-only
+
+### ファイルを指定して変更差分を確認する
+$ git diff program.c
+$ git diff -- program.c
+
+### スペースの数を無視する
+$ git diff -b
+$ git diff --ignore-space-changes
+
+### スペースを無視する
+$ git diff -w
+$ git diff --ignroe-all-space
+
+### 空行を無視する
+$ git diff --ignore-blank-lines
+
+### 行ではなく文字単位で差分を表示する (差分範囲を記号と色で指定)
+$ git diff --word-diff
+
+### 行ではなく文字単位で差分を表示する (差分を色だけで指定)
+$ git diff --word-diff=color
+
+### 過去のコミットとの差分を確認する
+$ git diff [commit-id]
+$ git diff 39a20cf5
+
+### ブランチ単位の差分を確認する
+$ git diff branch1 branch2
+
+### ブランチとファイルを指定して差分を確認する
+$ git diff branch1:src/program.c branch2:src/program.c
+
+# External
+
+### 外部ツールを使用して差分を表示する 設定が必要
+$ git difftool
+
+# vim: ft=sh
